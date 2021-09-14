@@ -22,6 +22,13 @@ end
 
 
 """
+    LogRange(a, b, n)::Range
+"""
+function LogRange(a, b, n::Int)
+    10 .^ LinRange(log10(a), log10(b), n)
+end
+
+"""
     pure_tone(freq, phase, dur, fs)
 
 Synthesizes a pure tone with specified frequency, phase offset (in radians), duration, and sampling rate.
