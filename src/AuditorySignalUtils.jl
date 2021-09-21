@@ -12,6 +12,20 @@ end
 
 
 """
+    cosine_ramp(signal, dur_ramp, fs)
+
+Applies a raised-cosine ramp to the input signal, where dur_ramp is the duration of each
+samp segment in seconds
+"""
+function cosine_ramp(signal::Array{Float64, 1}, dur_ramp::Float64, fs::Float64)::Array{Float64, 1}
+    t = LinRange(0, 0.25, Int(floor(fs*dur_ramp)))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
+    ramp_segment = sin.(2*pi*t).^2
+    ramp = [ramp_segment; ones(length(signal) - length(ramp_segment)*2); reverse(ramp_segment)]
+    return signal .* ramp
+end
+
+
+"""
     dbspl(signal)::Float64
 
 Calculates the dB SPL value of a signal (assuming that the units of the signal are in Pascals)
