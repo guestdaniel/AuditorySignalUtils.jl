@@ -1,4 +1,6 @@
 module AuditorySignalUtils
+export amplify, cosine_ramp, dbspl, LogRange, pure_tone, rms, scale_dbspl 
+
 using Statistics
 
 """
