@@ -27,6 +27,14 @@ scale_dbspl
 amplify
 ```
 
+A few functions include in-place versions to optimize performance. 
+These versions are marked with a trailing exclamation mark (!) per standard Julia style.
+
+```@docs
+scale_dbspl!
+amplify!
+```
+
 ## Other utilities
 
 Various functions I frequently need and don't want to redefine in every file.
