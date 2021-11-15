@@ -1,12 +1,15 @@
 module AuditorySignalUtils
-export amplify, amplify!, cosine_ramp, cosine_ramp!, dbspl, LogRange, pure_tone, rms, scale_dbspl, scale_dbspl!
 
 using Statistics
+
+export amplify, amplify!, cosine_ramp, cosine_ramp!, dbspl, LogRange, pure_tone, rms, 
+       scale_dbspl, scale_dbspl!
 
 """
     amplify(signal, dB)
 
-Amplifies a signal's power by a certain amount in dB (or attenuates the signal if dB is negative)
+Amplifies a signal (in terms of power) by an amount in dB (or attenuates the signal if dB\
+ is negative)
 """
 function amplify(signal::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
     signal .* 10^(dB/20)
@@ -16,7 +19,9 @@ end
 """
     amplify!(signal, dB)
 
-Amplifies a signal's power by a certain amount in dB (or attenuates the signal if dB is negative)
+Amplifies a signal (in terms of power) by an amount in dB (or attenuates the signal if dB is negative).
+
+Note, this version of the function operates in-place (i.e., no extra memory is allocated and the input is modified in-place)
 """
 function amplify!(signal::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
     signal .*= 10^(dB/20)
