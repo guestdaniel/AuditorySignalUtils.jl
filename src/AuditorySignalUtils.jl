@@ -3,7 +3,7 @@ module AuditorySignalUtils
 using Statistics
 
 export amplify, amplify!, cosine_ramp, cosine_ramp!, dbspl, LogRange, pure_tone, rms, 
-       scale_dbspl, scale_dbspl!
+       scale_dbspl, scale_dbspl!, zero_pad
 
 """
     amplify(signal, dB)
@@ -121,6 +121,18 @@ function scale_dbspl!(signal::AbstractVector{T}, dB::T)::AbstractVector{T} where
     amplify!(signal, dB - dbspl(signal))
 end
 
+"""
+    zero_pad(signal, z_lead=0, z_trail=0)
+
+Pads a signal with zeros before and after
+"""
+function zero_pad(signal::AbstractVector{T}, z_lead::K, z_trail::K) where {T<:Real, K<:Int}
+    [zeros(z_lead); signal; zeros(z_trail)]
+end
+
+function zero_pad(signal::AbstractVector{T}, z_lead::T, z_trail::T, fs::T) where {T<:Real}
+    [zeros(Int(floor(fs*z_lead))); signal; zeros(Int(floor(fs*z_trail)))]
+end
 
 end # module
 
