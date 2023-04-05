@@ -1,55 +1,39 @@
 using Test
 using AuditorySignalUtils
+using DSP: rms
 
 # Declare various constants that hold across all tests
-fs = 5000.0
-dur = 1.0
-precision = -3
+const fs = 48e3
 
-# Define a function to check approximate equality
-function approx_equal(x1, x2, error_size)
-    abs(x1 - x2) <= 10.0^error_size
-end
-
-# Define a shorter function that handles approximate equality with a constant precision across tests
-function ae(x1, x2)
-    approx_equal(x1, x2, precision)
-end
-
-# Test the approx_equal function
-@test approx_equal(0, 0.0000000001, -5)
-@test approx_equal(0, 1, -5) == false
-
-# Test that pure_tone() properly synthesizes tones with phase shifts in radians (0, pi/2, pi, 3pi/2) work correctly
-@testset "pure tones" begin
-    @test ae(AuditorySignalUtils.pure_tone(5.0, 0.0, dur, fs)[1], 0)
-    @test ae(AuditorySignalUtils.pure_tone(5.0, pi/2, dur, fs)[1], 1)
-    @test ae(AuditorySignalUtils.pure_tone(5.0, pi, dur, fs)[1], 0)
-    @test ae(AuditorySignalUtils.pure_tone(5.0, 3*pi/2, dur, fs)[1], -1)
-end
-
-# Test that rms() correctly returns the rms values of an unscaled sinusoid
-@test ae(AuditorySignalUtils.rms(AuditorySignalUtils.pure_tone(5.0, 0.0, dur, fs)), 0.707)
-
-# Test that dbspl() correctly correctly calculates levels of reference stimuli
-@test ae(AuditorySignalUtils.dbspl(AuditorySignalUtils.pure_tone(5.0, 0.0, dur, fs)), 90.968)
-
-# Test that amplify() produces correct changes in power and amplitude of sinusoid
-@testset "amplification" begin
-    # Test amplification
-    @test begin
-        # Synthesize pure tone and then increment it by 10 dB
-	      baseline_signal = AuditorySignalUtils.pure_tone(5.0, 0.0, dur, fs)
-        amplified_signal = AuditorySignalUtils.amplify(baseline_signal, 6.0)
-        # Check that amplitude and power ratios are correct
-        ae(maximum(amplified_signal)/maximum(baseline_signal), 1.995) && ae(maximum(amplified_signal)^2/maximum(baseline_signal)^2, 3.981)
-    end
-    # Test attenuation
-    @test begin
-        # Synthesize pure tone and then increment it by 10 dB
-	      baseline_signal = AuditorySignalUtils.pure_tone(5.0, 0.0, dur, fs)
-        amplified_signal = AuditorySignalUtils.amplify(baseline_signal, -6.0)
-        # Check that amplitude and power ratios are correct
-        ae(maximum(amplified_signal)/maximum(baseline_signal), 0.501) && ae(maximum(amplified_signal)^2/maximum(baseline_signal)^2, 0.251)
+# Test: amplify correctly adjusts power and amplitude ratios
+@testset "amplify" begin
+    for dB in -50.0:5.0:50.0
+        x_ref = pure_tone(1000.0, 0.0, 0.1, fs)
+        x_amp = amplify(x_ref, dB)
+        amplitude_ratio = maximum(x_amp) / maximum(x_ref)
+        power_ratio = maximum(x_amp)^2 / maximum(x_ref)^2
+        @test (
+            (amplitude_ratio ≈ 10^(dB/20)) & 
+            (power_ratio ≈ 10^(dB/10))
+        )
     end
 end
+
+# Test: pure_tone() properly phase shifts a sine tone as function of input phase 
+@testset "Pure tone synthesis" begin
+    for ϕ in LinRange(0.0, 2π, 20)
+        @test pure_tone(5.0, ϕ, 0.01, fs)[1] ≈ sin(ϕ)
+    end
+end
+
+# Test: db SPL returns the correct value for various reference sounds
+@testset "dB SPL" begin
+    @test dbspl(zeros(5000)) == -Inf
+    @test dbspl(pure_tone(1000.0, 0.0, 1.0, fs)) ≈ 90.969 atol=0.01
+    @test begin
+        x = pure_tone(1000.0, 0.0, 1.0, fs)
+        x = x ./ rms(x)
+        ≈(dbspl(x), 93.979; atol=0.01)
+    end
+end
+

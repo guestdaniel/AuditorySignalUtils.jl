@@ -1,74 +1,63 @@
 module AuditorySignalUtils
 
 using Statistics
+using DSP: rms
 
-export amplify, amplify!, cosine_ramp, cosine_ramp!, dbspl, LogRange, pure_tone, rms, 
+export amplify, amplify!, cosine_ramp, cosine_ramp!, dbspl, LogRange, pure_tone, 
        scale_dbspl, scale_dbspl!, zero_pad
 
 """
-    amplify(signal, dB)
+    amplify(x, dB)
 
-Amplifies a signal (in terms of power) by an amount in dB (or attenuates the signal if dB 
-is negative)
+Amplifies (or attenuates) a signal by an amount in dB
+
+Changes the power in signal `x` by decibel factor `dB`. When `dB` is positive, the power in
+the signal is increased (i.e., signal is amplified) and when `dB` is negative, the power in
+the signal is decreased (i.e, signal is attenuated). Output signal and input signal have an
+intensity ratio of 10^(`dB`/10) and an amplitude ratio of 10^(`dB`/20)
 """
-function amplify(signal::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
-    signal .* 10^(dB/20)
+function amplify(x::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:AbstractFloat}
+    x .* 10.0^(dB/20.0)
 end
 
-
-"""
-    amplify!(signal, dB)
-
-Amplifies a signal (in terms of power) by an amount in dB (or attenuates the signal if dB 
-is negative).
-
-Note, this version of the function operates in-place (i.e., no extra memory is allocated 
-and the input is modified in-place)
-"""
-function amplify!(signal::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
-    signal .*= 10^(dB/20)
-    return signal
+function amplify!(x::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:AbstractFloat}
+    x .*= 10.0^(dB/20.0)
+    return x
 end
 
-
 """
-    cosine_ramp(signal, dur_ramp, fs)
+    cosine_ramp(x, dur_ramp, fs)
 
-Applies a raised-cosine ramp to the input signal, where dur_ramp is the duration of each 
-samp segment in seconds
+Applies a raised-cosine ramp to an input signal
+
+Applies a raised-cosine ramp to the input signal `x` where the ramp has duration `dur_ramp`
+(s) and sampling rate `fs` (Hz)
 """
-function cosine_ramp(signal::AbstractVector{T}, dur_ramp::T, fs::T)::AbstractVector{T} where {T<:Real}
+function cosine_ramp(x::AbstractVector{T}, dur_ramp::T, fs::T)::AbstractVector{T} where {T<:Real}
     t = LinRange(0, prevfloat(0.25), Int(floor(fs*dur_ramp)))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
-    ramp_segment = sin.(2*pi*t).^2
-    ramp = [ramp_segment; ones(length(signal) - length(ramp_segment)*2); reverse(ramp_segment)]
-    return signal .* ramp
+    ramp_segment = sin.(2π .* t).^2
+    ramp = [ramp_segment; ones(length(x) - length(ramp_segment)*2); reverse(ramp_segment)]
+    return x .* ramp
 end
 
-
-"""
-    cosine_ramp!(signal, dur_ramp, fs)
-
-Applies a raised-cosine ramp to the input signal, where dur_ramp is the duration of each 
-samp segment in seconds
-"""
-function cosine_ramp!(signal::AbstractVector{T}, dur_ramp::T, fs::T)::AbstractVector{T} where {T<:Real}
+function cosine_ramp!(x::AbstractVector{T}, dur_ramp::T, fs::T)::AbstractVector{T} where {T<:Real}
     t = LinRange(0, prevfloat(0.25), Int(floor(fs*dur_ramp)))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
-    ramp_segment = sin.(2*pi*t).^2
-    ramp = [ramp_segment; ones(length(signal) - length(ramp_segment)*2); reverse(ramp_segment)]
-    signal .*= ramp
-    return signal
+    ramp_segment = sin.(2π .* t).^2
+    ramp = [ramp_segment; ones(length(x) - length(ramp_segment)*2); reverse(ramp_segment)]
+    x .*= ramp
+    return x
 end
 
-
 """
-    dbspl(signal)
+    dbspl(x)
 
-Calculates the dB SPL value of a signal (assuming that the units of the signal are in Pa)
+Calculates the dB SPL value of a signal
+
+Calculates the dB SPL of the whole signal `x` assuming that the signals unit's are Pa
 """
-function dbspl(signal::AbstractVector{T})::T where {T<:Real}
-    20*log10(rms(signal)/20e-6)
+function dbspl(x::AbstractVector{T})::T where {T<:Real}
+    20*log10(rms(x)/20e-6)
 end
-
 
 """
     LogRange(a, b, n)
@@ -76,62 +65,52 @@ end
 Creates a vector with n elements spaced logarithmically from a to b
 """
 function LogRange(a::T, b::T, n::Int) where {T<:Real}
-    10 .^ LinRange(log10(a), log10(b), n)
+    if n == 1
+        exp(1/2 * (log(a) + log(b)))
+    else
+        exp.(LinRange(log(a), log(b), n))
+    end
 end
-
 
 """
     pure_tone(freq, phase, dur, fs)
 
-Synthesizes a pure tone with specified frequency, phase offset (in radians), duration, and 
-sampling rate
+Synthesize a pure tone 
+
+Synthesize pure tone with with specified frequency `f` (Hz), phase offset `ϕ` (rads),
+duration `dur` (s), and sampling rate `fs` (Hz) 
 """
-function pure_tone(freq::T, phase::T, dur::T, fs::T)::AbstractVector{T} where {T<:Real}
-    sin.(2*pi .* freq .* (0.0:(1/fs):prevfloat(dur)) .+ phase)
+function pure_tone(freq::T, ϕ::T, dur::T, fs::T)::AbstractVector{T} where {T<:Real}
+    sin.(2π .* freq .* (0.0:(1/fs):(dur-1/fs)) .+ ϕ)
 end
 
-
 """
-    rms(signal)
+    pure_tone(freq, phase, dur, fs)
 
-Calculates the room-mean-square (RMS) of a signal
+Synthesize a pure tone 
+
+Synthesize pure tone with with specified frequency `f` (Hz), phase offset `ϕ` (rads),
+duration `dur` (s), and sampling rate `fs` (Hz) 
 """
-function rms(signal::AbstractVector{T})::T where {T<:Real}
-    sqrt(mean(signal.^2))
+function pure_tone(freq::T, ϕ::M, dur::T, fs::T)::AbstractVector{T} where {T<:Real, M<:Irrational}
+    sin.(2π .* freq .* (0.0:(1/fs):(dur-1/fs)) .+ ϕ)
 end
 
-
 """
-    scale_dbspl(signal, dB)
+    scale_dbspl(x, dB)
 
-Adjusts a signals level to be a certain level in dB SPL
+Adjusts a signal's level to be a certain level in dB SPL
+
+Modified signal `x` to have level `dB` in dB SPL 
 """
-function scale_dbspl(signal::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
-    curr_dB = dbspl(signal)
+function scale_dbspl(x::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
+    curr_dB = dbspl(x)
     delta_dB = dB - curr_dB
-    amplify(signal, delta_dB)
+    amplify(x, delta_dB)
 end
 
-"""
-    scale_dbspl!(signal, dB)
-
-Adjusts a signals level to be a certain level in dB SPL
-"""
-function scale_dbspl!(signal::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
-    amplify!(signal, dB - dbspl(signal))
-end
-
-"""
-    zero_pad(signal, z_lead=0, z_trail=0)
-
-Pads a signal with zeros before and after
-"""
-function zero_pad(signal::AbstractVector{T}, z_lead::K, z_trail::K) where {T<:Real, K<:Int}
-    [zeros(z_lead); signal; zeros(z_trail)]
-end
-
-function zero_pad(signal::AbstractVector{T}, z_lead::T, z_trail::T, fs::T) where {T<:Real}
-    [zeros(Int(floor(fs*z_lead))); signal; zeros(Int(floor(fs*z_trail)))]
+function scale_dbspl!(x::AbstractVector{T}, dB::T)::AbstractVector{T} where {T<:Real}
+    amplify!(x, dB - dbspl(x))
 end
 
 end # module
