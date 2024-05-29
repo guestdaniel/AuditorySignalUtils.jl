@@ -4,15 +4,34 @@ export amplify, amplify!,
        LogRange, 
        scale_dbspl, scale_dbspl!, 
        zero_pad, zero_pad!,
-       samples, timeat, timevec, logtimerange, silence, withisi,
+       samples, sampleat, timeat, timevec, logtimerange, silence, withisi,
+       octs,
        sl_to_ol
 
+# Compute octaves
+octs(freq, shift) = freq * 2.0 ^ shift
+
+# Convert duration to samples 
 samples(time, fs) = Int(round(time*fs))
-timeat(sample, fs) = sample/fs
+
+# Convert sample index to time  index
+timeat(sample, fs) = (sample-1)/fs
+
+# Convert time index to sample index
+sampleat(time, fs) = Int(round(time*fs + 1))
+
+# Create time vector
 timevec(dur::Float64, fs) = (0.0:(1/fs):nextfloat(dur-1/fs))
 timevec(samples::Int64, fs) = (0.0:(1/fs):nextfloat(samples/fs-1/fs))
+timevec(x::Vector, fs) = (0.0:(1/fs):nextfloat(length(x)/fs-1/fs))
+
+# Create range of times on log2 scale
 logtimerange(time, low=-3, high=3, spacing=1) = time .* 2.0 .^ (low:spacing:high)
+
+# Create period of silence
 silence(time, fs) = zeros(samples(time, fs))
+
+# Put silence between two vectors
 withisi(x, y; isi=0.10, fs=100e3) = vcat(x, silence(isi, fs), y)
 
 """

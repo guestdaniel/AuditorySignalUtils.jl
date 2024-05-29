@@ -37,3 +37,11 @@ end
     end
 end
 
+# Test: functions for converting between time/samples work correctly
+@testset "Time conversion" begin
+    @test sampleat(0.0, 100e3) == 1
+    @test sampleat(1.0-1/47e3, 47e3) == 47e3
+    @test sampleat(1.0, 47e3) == 47e3+1
+    @test samples(0.0, 100e3) == 0
+    @test samples(1.0, 100e3) == 100e3
+end
