@@ -1,7 +1,7 @@
 export amplify, amplify!, 
        cosine_ramp, cosine_ramp!, 
        dbspl, 
-       LogRange, 
+       LogRange, OctRange,
        scale_dbspl, scale_dbspl!, 
        zero_pad, zero_pad!,
        samples, sampleat, timeat, timevec, logtimerange, silence, withisi,
@@ -83,12 +83,25 @@ function LogRange(a::T, b::T, n::Int) where {T<:Real}
 end
 
 """
+    OctRange(a, b, n)
+
+Creates a vector with n elements spaced from `l` octs below to `u` octs above `x`
+"""
+function OctRange(x::T, l::T, u::T, n::Int) where {T<:Real}
+    if n == 1
+        error("Can't octrange one value")
+    else
+        LogRange(octs(x, l), octs(x, u), n)
+    end
+end
+
+"""
     scale_dbspl(x, level)
 
 Adjusts signal's level to be `level` in dB SPL re: 20μPa
 """
-scale_dbspl(x, level) = amplify(x, level - dbspl(x))
-scale_dbspl!(x, level) = amplify!(x, level - dbspl(x))
+scale_dbspl(x, level) = amplify(x, isnan(level - dbspl(x)) ? -Inf : level - dbspl(x))
+scale_dbspl!(x, level) = amplify!(x, isnan(level - dbspl(x)) ? -Inf : level - dbspl(x))
 
 """
     sl_to_ol(level, fs)
