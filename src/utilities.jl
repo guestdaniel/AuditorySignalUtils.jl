@@ -1,12 +1,17 @@
-export amplify, amplify!, 
-       cosine_ramp, cosine_ramp!, 
-       dbspl, 
-       LogRange, OctRange,
-       scale_dbspl, scale_dbspl!, 
-       zero_pad, zero_pad!,
-       samples, sampleat, timeat, timevec, logtimerange, silence, withisi,
-       octs,
-       sl_to_ol
+# Amplification, level setting, level measurements, etc.
+export amplify, amplify!, dbspl, scale_dbspl, scale_dbspl!, sl_to_ol
+
+# Signal ramping
+export cosine_ramp, cosine_ramp!
+
+# Log ranges, octave ranges, calculating octaves, etc.
+export LogRange, OctRange, octs, logtimerange
+
+# Zero-padding and other generic utilities
+export zero_pad, zero_pad!, silence, withisi
+
+# Conversion between samples, times, durations, etc.
+export samples, sampleat, timeat, timevec
 
 # Compute octaves
 octs(freq, shift) = freq * 2.0 ^ shift
@@ -65,7 +70,7 @@ end
 """
     dbspl(x)
 
-Calculate signal's RMS level in dB SPL re: 20μPa
+Calculate signal's RMS level in dB SPL re: 20 μPa
 """
 dbspl(x) = 20.0*log10(DSP.rms(x)/20e-6)
 
