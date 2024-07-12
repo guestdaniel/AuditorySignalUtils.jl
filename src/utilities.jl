@@ -53,14 +53,14 @@ amplify(x, dB) = x .* 10.0^(dB/20.0)
 Applies raised-cosine ramp of dur `dur_ramp` (s) to input signal of sampling rate `fs`
 """
 function cosine_ramp(x, dur_ramp, fs)
-    t = LinRange(0, prevfloat(0.25), Int(floor(fs*dur_ramp)))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
+    t = LinRange(0, prevfloat(0.25), samples(dur_ramp, fs))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
     ramp_segment = sin.(2π .* t).^2
     ramp = [ramp_segment; ones(length(x) - length(ramp_segment)*2); reverse(ramp_segment)]
     return x .* ramp
 end
 
 function cosine_ramp!(x, dur_ramp, fs)
-    t = LinRange(0, prevfloat(0.25), Int(floor(fs*dur_ramp)))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
+    t = LinRange(0, prevfloat(0.25), samples(dur_ramp, fs))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
     ramp_segment = sin.(2π .* t).^2
     ramp = [ramp_segment; ones(length(x) - length(ramp_segment)*2); reverse(ramp_segment)]
     x .*= ramp
