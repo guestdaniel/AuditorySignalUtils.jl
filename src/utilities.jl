@@ -39,6 +39,9 @@ silence(time, fs) = zeros(samples(time, fs))
 # Put silence between two vectors
 withisi(x, y; isi=0.10, fs=100e3) = vcat(x, silence(isi, fs), y)
 
+# Basic signal processing utilitiesj
+hann(n, N) = (1/2) * (1 - cos(2π*n/N))
+
 """
     amplify(x, dB)
 
@@ -50,20 +53,23 @@ amplify(x, dB) = x .* 10.0^(dB/20.0)
 """
     cosine_ramp(x, dur_ramp, fs)
 
-Applies raised-cosine ramp of dur `dur_ramp` (s) to input signal of sampling rate `fs`
+Applies raised-cosine ramp of dur `dur_ramp` (s) to input signal of sampling rate `fs` (Hz)
+
+Applies a raised-cosine ramp to the input `x` with specified duration and sampling rate.
+Note that this ramp is the square of a cosine ramp, or equivalently the Hann function:
+    1/2 * [1 - cos(2πn/N)], 0 ≤ n ≤ N
+evaluated from 0 to N where N is twice the length of the ramp in samples:
 """
 function cosine_ramp(x, dur_ramp, fs)
-    t = LinRange(0, prevfloat(0.25), samples(dur_ramp, fs))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
-    ramp_segment = sin.(2π .* t).^2
-    ramp = [ramp_segment; ones(length(x) - length(ramp_segment)*2); reverse(ramp_segment)]
-    return x .* ramp
+    y = deepcopy(x)
+    cosine_ramp!(y, dur_ramp, fs)
 end
 
 function cosine_ramp!(x, dur_ramp, fs)
-    t = LinRange(0, prevfloat(0.25), samples(dur_ramp, fs))  # f = 1 Hz, dur = 1/4 cycle, 0 -> 1
-    ramp_segment = sin.(2π .* t).^2
-    ramp = [ramp_segment; ones(length(x) - length(ramp_segment)*2); reverse(ramp_segment)]
-    x .*= ramp
+    len = samples(dur_ramp, fs)
+    r = hann.(0:len, len*2)
+    r = vcat(r, ones(length(x) - 2*length(r)), reverse(r))
+    x .*= r
     return x
 end
 
