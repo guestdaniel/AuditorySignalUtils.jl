@@ -8,7 +8,7 @@ export cosine_ramp, cosine_ramp!
 export LogRange, OctRange, octs, logtimerange
 
 # Zero-padding and other generic utilities
-export zero_pad, zero_pad!, silence, withisi
+export zero_pad, zero_pad!, silence, withisi, mixat
 
 # Conversion between samples, times, durations, etc.
 export samples, sampleat, timeat, timevec
@@ -38,6 +38,14 @@ silence(time, fs) = zeros(samples(time, fs))
 
 # Put silence between two vectors
 withisi(x, y; isi=0.10, fs=100e3) = vcat(x, silence(isi, fs), y)
+
+# Mix vector x with vector y starting at d seconds after the start of y
+function mixat(x, y, d; fs=100e3)
+    idx = sampleat(d, fs)
+    z = deepcopy(y)
+    z[idx:(idx+length(x)-1)] .+= x
+    z
+end
 
 # Basic signal processing utilitiesj
 hann(n, N) = (1/2) * (1 - cos(2π*n/N))
