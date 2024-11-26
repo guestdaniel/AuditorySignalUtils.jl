@@ -1,7 +1,7 @@
 name = "AuditorySignalUtils"
 uuid = "20759599-9703-4078-b9af-37a489742e5c"
 authors = ["Daniel Guest <guestusut@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -11,8 +11,8 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
-julia = "1.8"
-BenchmarkTools = "1.5"
+julia = "1"
+BenchmarkTools = "1"
 DSP = "0.7"
-Statistics = "1.10"
-UnicodePlots = "3.6"
+Statistics = "1"
+UnicodePlots = "3"
