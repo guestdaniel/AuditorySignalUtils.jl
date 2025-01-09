@@ -112,6 +112,10 @@ function te_noise(;
     dur_ramp=0.01,
     fs=100e3,
 )
+    # Make some assertions to avoid common mistakes
+    @assert dur > (2*dur_ramp)
+    @assert freq_high > freq_low
+
     # Determine length of stimulus in samples
     n = samples(dur, fs)
 
