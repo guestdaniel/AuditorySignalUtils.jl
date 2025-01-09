@@ -39,11 +39,11 @@ silence(time, fs) = zeros(samples(time, fs))
 # Put silence between two vectors
 withisi(x, y; isi=0.10, fs=100e3) = vcat(x, silence(isi, fs), y)
 
-# Mix vector x with vector y starting at d seconds after the start of y
+# Mix vector y with vector x starting at d seconds after the start of x
 function mixat(x, y, d; fs=100e3)
     idx = sampleat(d, fs)
-    z = deepcopy(y)
-    z[idx:(idx+length(x)-1)] .+= x
+    z = deepcopy(x)
+    z[idx:(idx+length(y)-1)] .+= y
     z
 end
 
