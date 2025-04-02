@@ -25,6 +25,18 @@ timeat(sample, fs) = (sample-1)/fs
 # Convert time index to sample index
 sampleat(time, fs) = Int(round(time*fs + 1))
 
+# Convert start and stop time to corresponding sample range, under the normal convention
+# that stop time is exclusive w.r.t to the nearest sample, i.e., stop time is really 
+# stop time - 1/fs
+function samples(start, stop, fs)
+    start = sampleat(start, fs)
+    stop = samples(stop, fs)
+    if start > stop
+        error("Start time must be less than stop time")
+    end
+    return start:stop
+end
+
 # Create time vector
 timevec(dur::Float64, fs) = (0.0:(1/fs):nextfloat(dur-1/fs))
 timevec(samples::Int64, fs) = (0.0:(1/fs):nextfloat(samples/fs-1/fs))
